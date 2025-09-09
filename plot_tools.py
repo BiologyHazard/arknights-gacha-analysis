@@ -1,3 +1,4 @@
+import re
 from collections.abc import Sequence
 from typing import Literal
 
@@ -26,6 +27,10 @@ plt.rcParams["figure.dpi"] = 300
 # 描边预设
 stroke_white = [pe.withStroke(linewidth=2.5, foreground="white")]
 stroke_black = [pe.withStroke(linewidth=2.5, foreground="black")]
+
+
+def make_valid_filename(s: str) -> str:
+    return re.sub(r'[\\/:*?"<>|]', '_', s).replace("\n", "")
 
 
 # def calc_quantile_point(cdf, quantile_p):
@@ -128,7 +133,8 @@ def draw_pmf_cdf_fig(dist: FiniteDist,
     ax2.set_ylim(0, ax2_y_top)
 
     if save:
-        fig.savefig(f"图片/{title}.png", dpi=300)
+        file_name = make_valid_filename(f"{title}.png")
+        fig.savefig(f"图片/{file_name}", dpi=300)
 
     return fig, (ax1, ax2)
 
@@ -212,7 +218,8 @@ def draw_multi_cdf_fig(dists: Sequence[FiniteDist],
             fontsize=14, fontweight="medium", color="black", alpha=0.3, path_effects=stroke_white, zorder=12)
 
     if save:
-        fig.savefig(f"图片/{title}.png", dpi=300)
+        file_name = make_valid_filename(f"{title}.png")
+        fig.savefig(f"图片/{file_name}", dpi=300)
 
     return fig, (ax,)
 
@@ -317,6 +324,7 @@ def draw_multi_pmf_cdf_fig(dists: Sequence[FiniteDist],
     ax1.legend()
 
     if save:
-        fig.savefig(f"图片/{title}.png", dpi=300)
+        file_name = make_valid_filename(f"{title}.png")
+        fig.savefig(f"图片/{file_name}", dpi=300)
 
     return fig, (ax1, ax2)
