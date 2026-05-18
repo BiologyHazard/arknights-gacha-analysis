@@ -1,9 +1,5 @@
-from collections.abc import Sequence
-
 import numpy as np
-import scipy.stats
-from numpy.typing import ArrayLike, NDArray
-
+from numpy.typing import NDArray
 
 from random_variable import FiniteDist
 
@@ -51,7 +47,7 @@ def cond_prob_to_dist(cond_prob) -> NDArray:
 
     for i, prob in enumerate(cond_prob):
         dist[i + 1] = fail_prob * prob
-        fail_prob *= (1 - prob)
+        fail_prob *= 1 - prob
 
     return dist
 
