@@ -68,7 +68,7 @@ fn 获取状态索引(
         + 已获取UP五星干员数量.min(已获取UP五星干员数量上限)
 }
 
-struct csr_array {
+struct coo_array {
     data: Vec<f64>,
     row_ind: Vec<u32>,
     col_ind: Vec<u32>,
@@ -196,7 +196,7 @@ fn 状态转移(
 
 // ─── 构造状态转移矩阵 ─────────────────────────────────────────────────
 
-fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> csr_array {
+fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> coo_array {
     let mut data: Vec<f64> = Vec::new();
     let mut row_ind: Vec<u32> = Vec::new();
     let mut col_ind: Vec<u32> = Vec::new();
@@ -235,7 +235,7 @@ fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> csr_array {
         }
     }
 
-    csr_array {
+    coo_array {
         data,
         row_ind,
         col_ind,
@@ -301,7 +301,7 @@ fn 写入u32切片_gz(path: &str, data: &[u32]) {
 }
 
 /// 将 CSR 矩阵写入文件
-fn 写入矩阵文件(out_dir: &str, prefix: &str, mat: &csr_array) {
+fn 写入矩阵文件(out_dir: &str, prefix: &str, mat: &coo_array) {
     let dir = Path::new(out_dir);
 
     let data_path = dir.join(format!("{prefix}.data.bin"));
@@ -342,7 +342,7 @@ fn 预计算计数数组() -> (Vec<u8>, Vec<u8>) {
 }
 
 /// 计算 `v_new = v_old @ matrix`（COO 格式的稀疏矩阵 × 密集向量乘法）
-fn coo_matvec(v_old: &[f64], mat: &csr_array, v_new: &mut [f64]) {
+fn coo_matvec(v_old: &[f64], mat: &coo_array, v_new: &mut [f64]) {
     v_new.fill(0.0);
     for k in 0..mat.data.len() {
         let row = mat.row_ind[k] as usize;
