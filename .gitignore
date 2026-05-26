@@ -13,3 +13,4 @@ logs/
 
 *.png
 *.npz
+*.bin
