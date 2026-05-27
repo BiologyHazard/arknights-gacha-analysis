@@ -4,10 +4,10 @@
 use std::fs;
 use std::time::Instant;
 
-use monster_hunter_collab_matrix::matrix::{coo_to_csr, csr_array, csr_matvec};
+use monster_hunter_collab_matrix::matrix::{CsrArray, coo_to_csr, vec_mul_csr_array};
 use monster_hunter_collab_matrix::monster_hunter_gacha::{
-    aggregate, 保存结果, 构造状态转移矩阵, 状态数量, 矩阵类型枚举, 获取状态索引, 迭代次数,
-    预计算计数数组,
+    保存结果, 构造状态转移矩阵, 状态已获取UP六星和UP五星干员数量联合分布, 状态数量, 矩阵类型枚举,
+    获取状态索引, 迭代次数, 预计算计数数组,
 };
 
 fn main() {
@@ -32,7 +32,7 @@ fn main() {
             t0.elapsed().as_secs_f64()
         );
         let t0 = Instant::now();
-        let csr_array: csr_array<f64, u32, u32> = coo_to_csr(&coo_array);
+        let csr_array: CsrArray<f64, u32, u32> = coo_to_csr(&coo_array);
         println!("  COO → CSR，耗时 {:.1}s", t0.elapsed().as_secs_f64());
         // 写入coo矩阵文件(output_dir, "状态转移矩阵_第10抽", &coo_array);
         csr_array
@@ -45,7 +45,7 @@ fn main() {
             t0.elapsed().as_secs_f64()
         );
         let t0 = Instant::now();
-        let csr_array: csr_array<f64, u32, u32> = coo_to_csr(&coo_array);
+        let csr_array: CsrArray<f64, u32, u32> = coo_to_csr(&coo_array);
         println!("  COO → CSR，耗时 {:.1}s", t0.elapsed().as_secs_f64());
         // 写入coo矩阵文件(output_dir, "状态转移矩阵_前50抽但非第10抽", &coo_array);
         csr_array
@@ -58,7 +58,7 @@ fn main() {
             t0.elapsed().as_secs_f64()
         );
         let t0 = Instant::now();
-        let csr_array: csr_array<f64, u32, u32> = coo_to_csr(&coo_array);
+        let csr_array: CsrArray<f64, u32, u32> = coo_to_csr(&coo_array);
         println!("  COO → CSR，耗时 {:.1}s", t0.elapsed().as_secs_f64());
         // 写入coo矩阵文件(output_dir, "状态转移矩阵_第51抽及以后", &coo_array);
         csr_array
@@ -91,8 +91,12 @@ fn main() {
             &状态转移矩阵_第51抽及以后
         };
 
-        csr_matvec(&旧状态分布, mat, &mut 新状态分布);
-        历史结果[i as usize] = aggregate(&新状态分布, &六星计数, &五星计数);
+        vec_mul_csr_array(&旧状态分布, mat, &mut 新状态分布);
+        历史结果[i as usize] = 状态已获取UP六星和UP五星干员数量联合分布(
+            &新状态分布,
+            &六星计数,
+            &五星计数,
+        );
         std::mem::swap(&mut 旧状态分布, &mut 新状态分布);
 
         let step_secs = step_start.elapsed().as_secs_f64();

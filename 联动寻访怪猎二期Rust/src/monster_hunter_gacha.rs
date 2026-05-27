@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use crate::io;
-use crate::matrix::coo_array;
+use crate::matrix::CooArray;
 
 pub const 六星水位上限: u8 = 98;
 pub const 五星水位上限: u8 = 39;
@@ -188,7 +188,7 @@ pub fn 状态转移(
 
 // ─── 构造状态转移矩阵 ─────────────────────────────────────────────────
 
-pub fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> coo_array<f64, u32, u32> {
+pub fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> CooArray<f64, u32, u32> {
     let mut data: Vec<f64> = Vec::new();
     let mut row_ind: Vec<u32> = Vec::new();
     let mut col_ind: Vec<u32> = Vec::new();
@@ -225,7 +225,7 @@ pub fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> coo_array<f
         }
     }
 
-    coo_array {
+    CooArray {
         data,
         row_ind,
         col_ind,
@@ -257,12 +257,17 @@ pub fn 预计算计数数组() -> (Vec<u8>, Vec<u8>) {
 }
 
 /// 将分布向量聚合到 (6★, 5★) 联合分布的 7×7 矩阵
-pub fn aggregate(状态分布: &[f64], 六星计数: &[u8], 五星计数: &[u8]) -> [[f64; 7]; 7] {
+pub fn 状态已获取UP六星和UP五星干员数量联合分布(
+    状态分布: &[f64],
+    状态已获取UP六星干员数量: &[u8],
+    状态已获取UP五星干员数量: &[u8],
+) -> [[f64; 7]; 7] {
     let mut result = [[0.0f64; 7]; 7];
-    for i in 0..状态分布.len() {
-        let p = 状态分布[i];
-        if p != 0.0 {
-            result[六星计数[i] as usize][五星计数[i] as usize] += p;
+    for 状态序号 in 0..状态分布.len() {
+        let 概率 = 状态分布[状态序号];
+        if 概率 != 0.0 {
+            result[状态已获取UP六星干员数量[状态序号] as usize]
+                [状态已获取UP五星干员数量[状态序号] as usize] += 概率;
         }
     }
     result

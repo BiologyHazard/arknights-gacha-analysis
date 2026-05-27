@@ -1,5 +1,6 @@
 use monster_hunter_collab_matrix::matrix::{
-    coo_array, coo_matvec, coo_to_csc, coo_to_csr, csc_array, csc_matvec, csr_array, csr_matvec,
+    CooArray, CscArray, CsrArray, coo_to_csc, coo_to_csr, vec_mul_coo_array, vec_mul_csc_array,
+    vec_mul_csr_array,
 };
 use monster_hunter_collab_matrix::monster_hunter_gacha::{
     构造状态转移矩阵, 状态数量, 矩阵类型枚举, 获取状态索引,
@@ -46,9 +47,9 @@ fn main() {
 
     // ── 用枚举统一三种格式，一个循环搞定 ──
     enum 矩阵格式<'a, T, UCOO, VCOO, UCSR, VCSR, UCSC, VCSC> {
-        Coo(&'a coo_array<T, UCOO, VCOO>),
-        Csr(&'a csr_array<T, UCSR, VCSR>),
-        Csc(&'a csc_array<T, UCSC, VCSC>),
+        Coo(&'a CooArray<T, UCOO, VCOO>),
+        Csr(&'a CsrArray<T, UCSR, VCSR>),
+        Csc(&'a CscArray<T, UCSC, VCSC>),
     }
 
     let 测试集: [(&str, 矩阵格式<f64, u32, u32, u32, u32, u32, u32>, Vec<f64>); 3] = [
@@ -66,9 +67,9 @@ fn main() {
         for i in 1..=测试迭代次数 {
             let t = Instant::now();
             match 格式 {
-                矩阵格式::Coo(mat) => coo_matvec(&v, mat, &mut v_out),
-                矩阵格式::Csr(mat) => csr_matvec(&v, mat, &mut v_out),
-                矩阵格式::Csc(mat) => csc_matvec(&v, mat, &mut v_out),
+                矩阵格式::Coo(mat) => vec_mul_coo_array(&v, mat, &mut v_out),
+                矩阵格式::Csr(mat) => vec_mul_csr_array(&v, mat, &mut v_out),
+                矩阵格式::Csc(mat) => vec_mul_csc_array(&v, mat, &mut v_out),
             }
             std::mem::swap(&mut v, &mut v_out);
             println!("  i={i:>3}, {:.4}s", t.elapsed().as_secs_f64());

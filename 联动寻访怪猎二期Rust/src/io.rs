@@ -5,7 +5,7 @@ use std::path::Path;
 use flate2::Compression;
 use flate2::write::GzEncoder;
 
-use crate::matrix::coo_array;
+use crate::matrix::CooArray;
 
 // ─── 泛型写入函数 ──────────────────────────────────────────────────
 
@@ -41,8 +41,8 @@ pub fn 写入切片_gz<T>(path: &str, data: &[T]) {
 
 // ─── 矩阵文件写入 ──────────────────────────────────────────────────
 
-/// 将 coo 矩阵写入文件（数据部分可以是任意类型 T，索引部分可以是任意类型 Idx）
-pub fn 写入coo矩阵文件<T, Idx>(out_dir: &str, prefix: &str, mat: &coo_array<T, Idx>) {
+/// 将 coo 矩阵写入文件
+pub fn 写入coo矩阵文件<T, U, V>(out_dir: &str, prefix: &str, coo_array: &CooArray<T, U, V>) {
     let dir = Path::new(out_dir);
 
     let data_path = dir.join(format!("{prefix}.data.bin"));
@@ -50,11 +50,11 @@ pub fn 写入coo矩阵文件<T, Idx>(out_dir: &str, prefix: &str, mat: &coo_arra
     let col_ind_path = dir.join(format!("{prefix}.col_ind.bin"));
 
     println!("  写入 {}...", data_path.display());
-    写入切片(data_path.to_str().unwrap(), &mat.data);
+    写入切片(data_path.to_str().unwrap(), &coo_array.data);
 
     println!("  写入 {}...", row_ind_path.display());
-    写入切片(row_ind_path.to_str().unwrap(), &mat.row_ind);
+    写入切片(row_ind_path.to_str().unwrap(), &coo_array.row_ind);
 
     println!("  写入 {}...", col_ind_path.display());
-    写入切片(col_ind_path.to_str().unwrap(), &mat.col_ind);
+    写入切片(col_ind_path.to_str().unwrap(), &coo_array.col_ind);
 }
