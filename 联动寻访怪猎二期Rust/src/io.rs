@@ -7,35 +7,26 @@ use flate2::write::GzEncoder;
 
 use crate::matrix::coo_array;
 
-/// 将 f64 切片写入文件
-pub fn 写入f64切片(path: &str, data: &[f64]) {
+// ─── 泛型写入函数 ──────────────────────────────────────────────────
+
+/// 将任意类型的切片以原生二进制格式写入文件
+pub fn 写入切片<T>(path: &str, data: &[T]) {
     let bytes: &[u8] = unsafe {
         std::slice::from_raw_parts(
             data.as_ptr() as *const u8,
-            data.len() * std::mem::size_of::<f64>(),
+            data.len() * std::mem::size_of::<T>(),
         )
     };
     fs::write(path, bytes).unwrap_or_else(|e| panic!("写入文件失败 {}: {}", path, e));
 }
 
-/// 将 u32 切片写入文件
-pub fn 写入u32切片(path: &str, data: &[u32]) {
-    let bytes: &[u8] = unsafe {
-        std::slice::from_raw_parts(
-            data.as_ptr() as *const u8,
-            data.len() * std::mem::size_of::<u32>(),
-        )
-    };
-    fs::write(path, bytes).unwrap_or_else(|e| panic!("写入文件失败 {}: {}", path, e));
-}
-
-/// 将 f64 切片以 gzip 压缩写入文件
+/// 将任意类型的切片以 gzip 压缩写入文件
 #[allow(dead_code)]
-pub fn 写入f64切片_gz(path: &str, data: &[f64]) {
+pub fn 写入切片_gz<T>(path: &str, data: &[T]) {
     let bytes: &[u8] = unsafe {
         std::slice::from_raw_parts(
             data.as_ptr() as *const u8,
-            data.len() * std::mem::size_of::<f64>(),
+            data.len() * std::mem::size_of::<T>(),
         )
     };
     let file = fs::File::create(path).unwrap_or_else(|e| panic!("创建文件失败 {}: {}", path, e));
@@ -48,27 +39,10 @@ pub fn 写入f64切片_gz(path: &str, data: &[f64]) {
         .unwrap_or_else(|e| panic!("关闭文件失败 {}: {}", path, e));
 }
 
-/// 将 u32 切片以 gzip 压缩写入文件
-#[allow(dead_code)]
-pub fn 写入u32切片_gz(path: &str, data: &[u32]) {
-    let bytes: &[u8] = unsafe {
-        std::slice::from_raw_parts(
-            data.as_ptr() as *const u8,
-            data.len() * std::mem::size_of::<u32>(),
-        )
-    };
-    let file = fs::File::create(path).unwrap_or_else(|e| panic!("创建文件失败 {}: {}", path, e));
-    let mut encoder = GzEncoder::new(file, Compression::default());
-    encoder
-        .write_all(bytes)
-        .unwrap_or_else(|e| panic!("写入文件失败 {}: {}", path, e));
-    encoder
-        .finish()
-        .unwrap_or_else(|e| panic!("关闭文件失败 {}: {}", path, e));
-}
+// ─── 矩阵文件写入 ──────────────────────────────────────────────────
 
-/// 将 coo 矩阵写入文件
-pub fn 写入coo矩阵文件(out_dir: &str, prefix: &str, mat: &coo_array) {
+/// 将 coo 矩阵写入文件（数据部分可以是任意类型 T，索引部分可以是任意类型 Idx）
+pub fn 写入coo矩阵文件<T, Idx>(out_dir: &str, prefix: &str, mat: &coo_array<T, Idx>) {
     let dir = Path::new(out_dir);
 
     let data_path = dir.join(format!("{prefix}.data.bin"));
@@ -76,11 +50,11 @@ pub fn 写入coo矩阵文件(out_dir: &str, prefix: &str, mat: &coo_array) {
     let col_ind_path = dir.join(format!("{prefix}.col_ind.bin"));
 
     println!("  写入 {}...", data_path.display());
-    写入f64切片(data_path.to_str().unwrap(), &mat.data);
+    写入切片(data_path.to_str().unwrap(), &mat.data);
 
     println!("  写入 {}...", row_ind_path.display());
-    写入u32切片(row_ind_path.to_str().unwrap(), &mat.row_ind);
+    写入切片(row_ind_path.to_str().unwrap(), &mat.row_ind);
 
     println!("  写入 {}...", col_ind_path.display());
-    写入u32切片(col_ind_path.to_str().unwrap(), &mat.col_ind);
+    写入切片(col_ind_path.to_str().unwrap(), &mat.col_ind);
 }

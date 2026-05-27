@@ -186,11 +186,10 @@ pub fn 状态转移(
 
 // ─── 构造状态转移矩阵 ─────────────────────────────────────────────────
 
-pub fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> coo_array {
+pub fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> coo_array<f64, u32, u32> {
     let mut data: Vec<f64> = Vec::new();
     let mut row_ind: Vec<u32> = Vec::new();
     let mut col_ind: Vec<u32> = Vec::new();
-    // let mut 当前状态索引: u32 = 0;
 
     for 起始六星水位 in 0..=六星水位上限 {
         for 起始五星水位 in 0..=五星水位上限 {
@@ -204,7 +203,7 @@ pub fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> coo_array {
                             起始UP六星水位,
                             起始已获取UP六星干员数量,
                             起始已获取UP五星干员数量,
-                        ) as u32;
+                        );
                         let 转移列表 = 状态转移(
                             起始六星水位,
                             起始五星水位,
@@ -215,10 +214,9 @@ pub fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> coo_array {
                         );
                         for (目标状态索引, 转移概率) in 转移列表 {
                             data.push(转移概率);
-                            row_ind.push(当前状态索引);
+                            row_ind.push(当前状态索引 as u32);
                             col_ind.push(目标状态索引 as u32);
                         }
-                        // 当前状态索引 += 1;
                     }
                 }
             }
@@ -278,6 +276,6 @@ pub fn 保存结果(历史结果: &[[[f64; 7]; 7]], output_dir: &str) {
         }
     }
     let path = Path::new(output_dir).join("历史获取甲乙数量联合分布.bin");
-    io::写入f64切片(path.to_str().unwrap(), &flat);
+    io::写入切片(path.to_str().unwrap(), &flat);
     println!("  已保存结果到 {}", path.display());
 }

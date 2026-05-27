@@ -4,8 +4,7 @@
 use std::fs;
 use std::time::Instant;
 
-use monster_hunter_collab_matrix::io::写入coo矩阵文件;
-use monster_hunter_collab_matrix::matrix::{coo_to_csr, csr_matvec};
+use monster_hunter_collab_matrix::matrix::{coo_to_csr, csr_array, csr_matvec};
 use monster_hunter_collab_matrix::monster_hunter_gacha::{
     aggregate, 保存结果, 构造状态转移矩阵, 状态数量, 矩阵类型枚举, 获取状态索引, 迭代次数,
     预计算计数数组,
@@ -33,9 +32,9 @@ fn main() {
             t0.elapsed().as_secs_f64()
         );
         let t0 = Instant::now();
-        let csr_array = coo_to_csr(&coo_array);
+        let csr_array: csr_array<f64, u32, u32> = coo_to_csr(&coo_array);
         println!("  COO → CSR，耗时 {:.1}s", t0.elapsed().as_secs_f64());
-        写入coo矩阵文件(output_dir, "状态转移矩阵_第10抽", &coo_array);
+        // 写入coo矩阵文件(output_dir, "状态转移矩阵_第10抽", &coo_array);
         csr_array
     };
     let 状态转移矩阵_前50抽但非第10抽 = {
@@ -46,9 +45,9 @@ fn main() {
             t0.elapsed().as_secs_f64()
         );
         let t0 = Instant::now();
-        let csr_array = coo_to_csr(&coo_array);
+        let csr_array: csr_array<f64, u32, u32> = coo_to_csr(&coo_array);
         println!("  COO → CSR，耗时 {:.1}s", t0.elapsed().as_secs_f64());
-        写入coo矩阵文件(output_dir, "状态转移矩阵_前50抽但非第10抽", &coo_array);
+        // 写入coo矩阵文件(output_dir, "状态转移矩阵_前50抽但非第10抽", &coo_array);
         csr_array
     };
     let 状态转移矩阵_第51抽及以后 = {
@@ -59,9 +58,9 @@ fn main() {
             t0.elapsed().as_secs_f64()
         );
         let t0 = Instant::now();
-        let csr_array = coo_to_csr(&coo_array);
+        let csr_array: csr_array<f64, u32, u32> = coo_to_csr(&coo_array);
         println!("  COO → CSR，耗时 {:.1}s", t0.elapsed().as_secs_f64());
-        写入coo矩阵文件(output_dir, "状态转移矩阵_第51抽及以后", &coo_array);
+        // 写入coo矩阵文件(output_dir, "状态转移矩阵_第51抽及以后", &coo_array);
         csr_array
     };
 
