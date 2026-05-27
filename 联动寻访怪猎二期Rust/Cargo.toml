@@ -2,6 +2,7 @@
 name = "monster-hunter-collab-matrix"
 version = "0.1.0"
 edition = "2024"
+default-run = "monster-hunter-collab-matrix"
 
 [dependencies]
 flate2 = "1.1.9"
