@@ -65,12 +65,12 @@ fn main() {
     };
 
     // ── 迭代参数 ──
-    let mut 历史结果 = vec![[[0.0f64; 7]; 7]; 迭代次数 + 1];
+    let mut 历史结果 = vec![[[0.0f64; 7]; 7]; 迭代次数 as usize + 1];
     历史结果[0][0][0] = 1.0; // 0 抽时 (六星=0, 五星=0)
 
-    let mut 旧状态分布 = vec![0.0f64; 状态数量];
-    let mut 新状态分布 = vec![0.0f64; 状态数量];
-    旧状态分布[获取状态索引(0, 0, 0, 0, 0)] = 1.0;
+    let mut 旧状态分布 = vec![0.0f64; 状态数量 as usize];
+    let mut 新状态分布 = vec![0.0f64; 状态数量 as usize];
+    旧状态分布[获取状态索引(0, 0, 0, 0, 0) as usize] = 1.0;
 
     // ── 预计算计数数组 ──
     println!("\n预计算计数数组...");
@@ -92,7 +92,7 @@ fn main() {
         };
 
         csr_matvec(&旧状态分布, mat, &mut 新状态分布);
-        历史结果[i] = aggregate(&新状态分布, &六星计数, &五星计数);
+        历史结果[i as usize] = aggregate(&新状态分布, &六星计数, &五星计数);
         std::mem::swap(&mut 旧状态分布, &mut 新状态分布);
 
         let step_secs = step_start.elapsed().as_secs_f64();

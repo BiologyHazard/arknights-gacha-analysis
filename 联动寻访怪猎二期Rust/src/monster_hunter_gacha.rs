@@ -5,25 +5,25 @@ use std::path::Path;
 use crate::io;
 use crate::matrix::coo_array;
 
-pub const 六星水位上限: usize = 98;
-pub const 五星水位上限: usize = 39;
-pub const UP六星水位上限: usize = 119;
-pub const 已获取UP六星干员数量上限: usize = 6;
-pub const 已获取UP五星干员数量上限: usize = 6;
-pub const 迭代次数: usize = 900;
+pub const 六星水位上限: u8 = 98;
+pub const 五星水位上限: u8 = 39;
+pub const UP六星水位上限: u8 = 119;
+pub const 已获取UP六星干员数量上限: u8 = 6;
+pub const 已获取UP五星干员数量上限: u8 = 6;
+pub const 迭代次数: u16 = 900;
 
 /// 状态总数 = 99 * 40 * 120 * 7 * 7 = 23284800
-pub const 状态数量: usize = (六星水位上限 + 1)
-    * (五星水位上限 + 1)
-    * (UP六星水位上限 + 1)
-    * (已获取UP六星干员数量上限 + 1)
-    * (已获取UP五星干员数量上限 + 1);
+pub const 状态数量: u32 = (六星水位上限 as u32 + 1)
+    * (五星水位上限 as u32 + 1)
+    * (UP六星水位上限 as u32 + 1)
+    * (已获取UP六星干员数量上限 as u32 + 1)
+    * (已获取UP五星干员数量上限 as u32 + 1);
 
-pub const COND_PROB_6_STAR: [f64; 六星水位上限 + 1] = {
-    let mut arr = [0.0; 六星水位上限 + 1];
+pub const COND_PROB_6_STAR: [f64; 六星水位上限 as usize + 1] = {
+    let mut arr = [0.0; 六星水位上限 as usize + 1];
     let mut 水位 = 0;
     while 水位 <= 六星水位上限 {
-        arr[水位] = if 水位 < 50 {
+        arr[水位 as usize] = if 水位 < 50 {
             0.02
         } else {
             (水位 - 49) as f64 * 0.02 + 0.02
@@ -33,11 +33,11 @@ pub const COND_PROB_6_STAR: [f64; 六星水位上限 + 1] = {
     arr
 };
 
-pub const COND_PROB_5_STAR: [f64; 五星水位上限 + 1] = {
-    let mut arr = [0.0; 五星水位上限 + 1];
+pub const COND_PROB_5_STAR: [f64; 五星水位上限 as usize + 1] = {
+    let mut arr = [0.0; 五星水位上限 as usize + 1];
     let mut 水位 = 0;
     while 水位 <= 五星水位上限 {
-        arr[水位] = if 水位 < 15 {
+        arr[水位 as usize] = if 水位 < 15 {
             0.08
         } else if 水位 < 20 {
             (水位 - 14) as f64 * 0.02 + 0.08
@@ -51,17 +51,19 @@ pub const COND_PROB_5_STAR: [f64; 五星水位上限 + 1] = {
 
 #[inline]
 pub fn 获取状态索引(
-    六星水位: usize,
-    五星水位: usize,
-    UP六星水位: usize,
-    已获取UP六星干员数量: usize,
-    已获取UP五星干员数量: usize,
-) -> usize {
-    (((六星水位 * (五星水位上限 + 1) + 五星水位) * (UP六星水位上限 + 1) + UP六星水位)
-        * (已获取UP六星干员数量上限 + 1)
-        + 已获取UP六星干员数量.min(已获取UP六星干员数量上限))
-        * (已获取UP五星干员数量上限 + 1)
-        + 已获取UP五星干员数量.min(已获取UP五星干员数量上限)
+    六星水位: u8,
+    五星水位: u8,
+    UP六星水位: u8,
+    已获取UP六星干员数量: u8,
+    已获取UP五星干员数量: u8,
+) -> u32 {
+    (((六星水位 as u32 * (五星水位上限 as u32 + 1) + 五星水位 as u32)
+        * (UP六星水位上限 as u32 + 1)
+        + UP六星水位 as u32)
+        * (已获取UP六星干员数量上限 as u32 + 1)
+        + (已获取UP六星干员数量 as u32).min(已获取UP六星干员数量上限 as u32))
+        * (已获取UP五星干员数量上限 as u32 + 1)
+        + (已获取UP五星干员数量 as u32).min(已获取UP五星干员数量上限 as u32)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -72,14 +74,14 @@ pub enum 矩阵类型枚举 {
 }
 
 pub fn 状态转移(
-    起始六星水位: usize,
-    起始五星水位: usize,
-    起始UP六星水位: usize,
-    起始已获取UP六星干员数量: usize,
-    起始已获取UP五星干员数量: usize,
+    起始六星水位: u8,
+    起始五星水位: u8,
+    起始UP六星水位: u8,
+    起始已获取UP六星干员数量: u8,
+    起始已获取UP五星干员数量: u8,
     矩阵类型: 矩阵类型枚举,
-) -> Vec<(usize, f64)> {
-    let mut 转移概率列表: Vec<(usize, f64)> = Vec::with_capacity(5);
+) -> Vec<(u32, f64)> {
+    let mut 转移概率列表: Vec<(u32, f64)> = Vec::with_capacity(5);
 
     if 起始UP六星水位 == 119 {
         转移概率列表.push((
@@ -93,12 +95,12 @@ pub fn 状态转移(
             1.0,
         ));
     } else {
-        let 六星概率 = COND_PROB_6_STAR[起始六星水位];
+        let 六星概率 = COND_PROB_6_STAR[起始六星水位 as usize];
         let 五星概率;
         if 矩阵类型 == 矩阵类型枚举::第10抽 && 起始五星水位 == 9 {
             五星概率 = 1.0 - 六星概率;
         } else {
-            五星概率 = COND_PROB_5_STAR[起始五星水位].clamp(0.0, 1.0 - 六星概率);
+            五星概率 = COND_PROB_5_STAR[起始五星水位 as usize].clamp(0.0, 1.0 - 六星概率);
         }
         let 四星或三星概率 = 1.0 - 六星概率 - 五星概率;
 
@@ -227,7 +229,7 @@ pub fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> coo_array<f
         data,
         row_ind,
         col_ind,
-        shape: (状态数量, 状态数量),
+        shape: (状态数量 as usize, 状态数量 as usize),
     }
 }
 
@@ -235,8 +237,8 @@ pub fn 构造状态转移矩阵(矩阵类型: 矩阵类型枚举) -> coo_array<f
 
 /// 预计算每个状态对应的 (已获取UP六星干员数量, 已获取UP五星干员数量)
 pub fn 预计算计数数组() -> (Vec<u8>, Vec<u8>) {
-    let mut 状态已获取UP六星干员数量 = Vec::with_capacity(状态数量);
-    let mut 状态已获取UP五星干员数量 = Vec::with_capacity(状态数量);
+    let mut 状态已获取UP六星干员数量 = Vec::with_capacity(状态数量 as usize);
+    let mut 状态已获取UP五星干员数量 = Vec::with_capacity(状态数量 as usize);
 
     for _六星水位 in 0..=六星水位上限 {
         for _五星水位 in 0..=五星水位上限 {

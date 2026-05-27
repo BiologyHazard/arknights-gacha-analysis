@@ -37,8 +37,8 @@ fn main() {
 
     // ── 准备初始向量 ──
     let v_init = {
-        let mut v = vec![0.0f64; 状态数量];
-        v[获取状态索引(0, 0, 0, 0, 0)] = 1.0;
+        let mut v = vec![0.0f64; 状态数量 as usize];
+        v[获取状态索引(0, 0, 0, 0, 0) as usize] = 1.0;
         v
     };
 
@@ -61,7 +61,7 @@ fn main() {
 
     for (名称, 格式, mut v) in 测试集 {
         println!("\n{名称} 格式迭代 (v * A)...");
-        let mut v_out = vec![0.0f64; 状态数量];
+        let mut v_out = vec![0.0f64; 状态数量 as usize];
         let total = Instant::now();
         for i in 1..=测试迭代次数 {
             let t = Instant::now();
