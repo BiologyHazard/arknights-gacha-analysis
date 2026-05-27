@@ -6,8 +6,8 @@ use std::time::Instant;
 
 use monster_hunter_collab_matrix::matrix::{CsrArray, coo_to_csr, vec_mul_csr_array};
 use monster_hunter_collab_matrix::monster_hunter_gacha::{
-    保存结果, 构造状态转移矩阵, 状态已获取UP六星和UP五星干员数量联合分布, 状态数量, 矩阵类型枚举,
-    获取状态索引, 迭代次数, 预计算计数数组,
+    保存结果, 构造状态转移矩阵, 状态已获取UP六星和UP五星干员数量联合分布, 矩阵类型枚举,
+    获取状态数量, 获取状态索引, 迭代次数, 预计算计数数组,
 };
 
 fn main() {
@@ -17,7 +17,7 @@ fn main() {
     fs::create_dir_all(output_dir)
         .unwrap_or_else(|e| panic!("创建输出目录失败 {}: {}", output_dir, e));
 
-    println!("状态空间大小: {} 个状态", 状态数量);
+    println!("状态空间大小: {} 个状态", 获取状态数量());
     println!("输出目录: {}", output_dir);
 
     // ── 构建全部 3 个状态转移矩阵 ──
@@ -68,6 +68,7 @@ fn main() {
     let mut 历史结果 = vec![[[0.0f64; 7]; 7]; 迭代次数 as usize + 1];
     历史结果[0][0][0] = 1.0; // 0 抽时 (六星=0, 五星=0)
 
+    let 状态数量 = 获取状态数量();
     let mut 旧状态分布 = vec![0.0f64; 状态数量 as usize];
     let mut 新状态分布 = vec![0.0f64; 状态数量 as usize];
     旧状态分布[获取状态索引(0, 0, 0, 0, 0) as usize] = 1.0;

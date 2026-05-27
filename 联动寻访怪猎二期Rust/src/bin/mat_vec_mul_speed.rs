@@ -3,7 +3,7 @@ use monster_hunter_collab_matrix::matrix::{
     vec_mul_csr_array,
 };
 use monster_hunter_collab_matrix::monster_hunter_gacha::{
-    构造状态转移矩阵, 状态数量, 矩阵类型枚举, 获取状态索引,
+    构造状态转移矩阵, 获取状态数量, 矩阵类型枚举, 获取状态索引,
 };
 use std::time::Instant;
 
@@ -37,6 +37,7 @@ fn main() {
     };
 
     // ── 准备初始向量 ──
+    let 状态数量 = 获取状态数量();
     let v_init = {
         let mut v = vec![0.0f64; 状态数量 as usize];
         v[获取状态索引(0, 0, 0, 0, 0) as usize] = 1.0;
@@ -63,6 +64,7 @@ fn main() {
     for (名称, 格式, mut v) in 测试集 {
         println!("\n{名称} 格式迭代 (v * A)...");
         let mut v_out = vec![0.0f64; 状态数量 as usize];
+
         let total = Instant::now();
         for i in 1..=测试迭代次数 {
             let t = Instant::now();
