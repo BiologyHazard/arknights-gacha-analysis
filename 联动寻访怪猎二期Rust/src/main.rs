@@ -6,7 +6,7 @@ use std::time::Instant;
 
 use monster_hunter_collab_matrix::matrix::{CsrArray, coo_to_csr, vec_mul_csr_array};
 use monster_hunter_collab_matrix::monster_hunter_gacha::{
-    保存结果, 构造状态转移矩阵, 状态已获取UP六星和UP五星干员数量联合分布, 矩阵类型枚举,
+    保存结果到npz压缩, 构造状态转移矩阵, 状态已获取UP六星和UP五星干员数量联合分布, 矩阵类型枚举,
     获取状态数量, 获取状态索引, 迭代次数, 预计算计数数组,
 };
 
@@ -75,7 +75,7 @@ fn main() {
 
     // ── 预计算计数数组 ──
     println!("\n预计算计数数组...");
-    let (六星计数, 五星计数) = 预计算计数数组();
+    let (状态已获取UP六星干员数量, 状态已获取UP五星干员数量) = 预计算计数数组();
     println!("  完成");
 
     // ── 执行 900 次迭代 ──
@@ -83,8 +83,7 @@ fn main() {
     let iter_start = Instant::now();
 
     for i in 1..=迭代次数 {
-        let step_start = Instant::now();
-        let mat = if i == 10 {
+        let 状态转移矩阵 = if i == 10 {
             &状态转移矩阵_第10抽
         } else if i <= 50 {
             &状态转移矩阵_前50抽但非第10抽
@@ -92,16 +91,27 @@ fn main() {
             &状态转移矩阵_第51抽及以后
         };
 
-        vec_mul_csr_array(&旧状态分布, mat, &mut 新状态分布);
+        // 向量-矩阵乘法
+        let mul_timer = Instant::now();
+        vec_mul_csr_array(&旧状态分布, 状态转移矩阵, &mut 新状态分布);
+        let mul_secs = mul_timer.elapsed().as_secs_f64();
+
+        // 聚合到联合分布
+        let aggregate_timer = Instant::now();
         历史结果[i as usize] = 状态已获取UP六星和UP五星干员数量联合分布(
             &新状态分布,
-            &六星计数,
-            &五星计数,
+            &状态已获取UP六星干员数量,
+            &状态已获取UP五星干员数量,
         );
+        let aggregate_secs = aggregate_timer.elapsed().as_secs_f64();
+
+        // 统计可达状态数（非零元）
+        let 可达状态数 = 新状态分布.iter().filter(|&&p| p != 0.0).count();
         std::mem::swap(&mut 旧状态分布, &mut 新状态分布);
 
-        let step_secs = step_start.elapsed().as_secs_f64();
-        println!("  i={i:>3}, 耗时 {step_secs:.3}s");
+        println!(
+            "  i={i:>3}  |  乘法 {mul_secs:.4}s  |  聚合 {aggregate_secs:.4}s  |  可达状态 {可达状态数}"
+        );
     }
 
     println!("\n迭代总耗时: {:.3}s", iter_start.elapsed().as_secs_f64());
@@ -109,6 +119,6 @@ fn main() {
 
     // ── 保存结果 ──
     println!("\n保存结果...");
-    保存结果(&历史结果, output_dir);
+    保存结果到npz压缩(&历史结果, output_dir);
     println!("\n✓ 全部完成！");
 }

@@ -285,15 +285,9 @@ pub fn 预计算计数数组() -> (Vec<u8>, Vec<u8>) {
     let mut 状态已获取UP六星干员数量 = Vec::with_capacity(状态数量 as usize);
     let mut 状态已获取UP五星干员数量 = Vec::with_capacity(状态数量 as usize);
 
-    for _六星水位 in 0..=六星水位上限 {
-        for _五星水位 in 0..=五星水位上限 {
-            if _五星水位 > _六星水位 {
-                continue;
-            }
-            for _UP六星水位 in 0..=UP六星水位上限 {
-                if _UP六星水位 < _六星水位 {
-                    continue;
-                }
+    for 六星水位 in 0..=六星水位上限 {
+        for _五星水位 in 0..=六星水位.min(五星水位上限) {
+            for _UP六星水位 in 六星水位..=UP六星水位上限 {
                 for 已获取UP六星干员数量 in 0..=已获取UP六星干员数量上限 {
                     for 已获取UP五星干员数量 in 0..=已获取UP五星干员数量上限 {
                         状态已获取UP六星干员数量.push(已获取UP六星干员数量 as u8);
@@ -327,13 +321,96 @@ pub fn 状态已获取UP六星和UP五星干员数量联合分布(
 /// 将历史获取甲乙数量联合分布保存为二进制文件
 /// 布局: (901, 7, 7) 的 f64 数组，按行优先（C order）展平
 pub fn 保存结果(历史结果: &[[[f64; 7]; 7]], output_dir: &str) {
-    let mut flat = Vec::with_capacity(历史结果.len() * 49);
+    let (flat, _shape) = 展平历史结果(历史结果);
+    let path = Path::new(output_dir).join("历史获取甲乙数量联合分布.bin");
+    io::写入切片(path.to_str().unwrap(), &flat);
+    println!("  已保存结果到 {}", path.display());
+}
+
+/// 将历史结果展平并返回形状
+fn 展平历史结果(历史结果: &[[[f64; 7]; 7]]) -> (Vec<f64>, Vec<usize>) {
+    let n = 历史结果.len();
+    let mut flat = Vec::with_capacity(n * 49);
     for &mat in 历史结果 {
         for &row in &mat {
             flat.extend_from_slice(&row);
         }
     }
-    let path = Path::new(output_dir).join("历史获取甲乙数量联合分布.bin");
-    io::写入切片(path.to_str().unwrap(), &flat);
-    println!("  已保存结果到 {}", path.display());
+    let shape = vec![n, 7, 7];
+    (flat, shape)
+}
+
+/// 将历史获取甲乙数量联合分布保存为 `.npy` 文件
+pub fn 保存结果到npy(历史结果: &[[[f64; 7]; 7]], output_dir: &str) {
+    let (flat, shape) = 展平历史结果(历史结果);
+    let path = Path::new(output_dir).join("历史获取甲乙数量联合分布.npy");
+    io::写入npy(path.to_str().unwrap(), &flat, &shape);
+    println!("  已保存 NPY 结果到 {}", path.display());
+}
+
+/// 将历史获取甲乙数量联合分布保存为未压缩的 `.npz` 文件
+pub fn 保存结果到npz(历史结果: &[[[f64; 7]; 7]], output_dir: &str) {
+    let (flat, shape) = 展平历史结果(历史结果);
+    let path = Path::new(output_dir).join("历史获取甲乙数量联合分布.npz");
+    io::写入npz(
+        path.to_str().unwrap(),
+        &[("历史获取甲乙数量联合分布", &flat, &shape)],
+    );
+    println!("  已保存 NPZ 结果到 {}", path.display());
+}
+
+/// 将历史获取甲乙数量联合分布保存为压缩的 `.npz` 文件
+pub fn 保存结果到npz压缩(历史结果: &[[[f64; 7]; 7]], output_dir: &str) {
+    let (flat, shape) = 展平历史结果(历史结果);
+    let path = Path::new(output_dir).join("历史获取甲乙数量联合分布.npz");
+    io::写入npz压缩(
+        path.to_str().unwrap(),
+        &[("历史获取甲乙数量联合分布", &flat, &shape)],
+    );
+    println!("  已保存压缩 NPZ 结果到 {}", path.display());
+}
+
+/// 从 `.npy` 文件读取历史获取甲乙数量联合分布
+/// 返回形状为 (N, 7, 7) 的 3 维数组，N 为抽取次数 + 1
+pub fn 读取结果从npy(path: &str) -> (Vec<[[f64; 7]; 7]>, Vec<usize>) {
+    let (flat, shape) = io::读取npy(path);
+    assert_eq!(flat.len() % 49, 0, "NPY 数据长度不是 49 的倍数（7×7 矩阵）");
+    assert!(
+        shape.len() >= 2 && shape[shape.len() - 1] == 7 && shape[shape.len() - 2] == 7,
+        "NPY 形状最后两维必须是 (?, 7, 7)，实际为 {:?}",
+        shape
+    );
+    let n = flat.len() / 49;
+    let mut result = Vec::with_capacity(n);
+    for i in 0..n {
+        let mut mat = [[0.0f64; 7]; 7];
+        for r in 0..7 {
+            for c in 0..7 {
+                mat[r][c] = flat[i * 49 + r * 7 + c];
+            }
+        }
+        result.push(mat);
+    }
+    (result, shape)
+}
+
+/// 从 `.npz` 文件读取历史获取甲乙数量联合分布
+pub fn 读取结果从npz(path: &str, array_name: &str) -> (Vec<[[f64; 7]; 7]>, Vec<usize>) {
+    let map = io::读取npz(path);
+    let (flat, shape) = map
+        .get(array_name)
+        .unwrap_or_else(|| panic!("NPZ 文件中找不到数组 '{}'", array_name));
+    assert_eq!(flat.len() % 49, 0, "NPZ 数据长度不是 49 的倍数（7×7 矩阵）");
+    let n = flat.len() / 49;
+    let mut result = Vec::with_capacity(n);
+    for i in 0..n {
+        let mut mat = [[0.0f64; 7]; 7];
+        for r in 0..7 {
+            for c in 0..7 {
+                mat[r][c] = flat[i * 49 + r * 7 + c];
+            }
+        }
+        result.push(mat);
+    }
+    (result, shape.clone())
 }
