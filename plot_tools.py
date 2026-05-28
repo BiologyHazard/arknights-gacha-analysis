@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Literal
 import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from matplotlib.ticker import PercentFormatter
 
 if TYPE_CHECKING:
@@ -450,3 +451,72 @@ def draw_multi_pmf_cdf_fig(
         fig.savefig(f"图片/{file_name}", dpi=300)
 
     return fig, (ax1, ax2)
+
+
+def _pct_str(q: float) -> str:
+    """格式化百分比，如 0.25 -> '25%', 0.9999 -> '99.99%'"""
+    pct = q * 100
+    if pct == pct // 1:
+        return f"{int(pct)}%"
+    return f"{pct}%"
+
+
+_DEFAULT_QUANTILES: list[tuple[float, str]] = [
+    (0.25, "较欧"),
+    (0.50, "凡人"),
+    (0.75, "较非"),
+    (0.90, "非酋"),
+    (0.95, "很非"),
+    (0.99, "极非"),
+    (0.9999, "万里挑一的非"),
+]
+
+
+def print_distribution_table(
+    dists: list[FiniteDist],
+    labels: list[str],
+    *,
+    quantiles: list[tuple[float, str]] | None = None,
+    expected_precision: int = 2,
+) -> pd.DataFrame:
+    """打印多个分布的期望和分位数表格（含趣味标签）。
+
+    Parameters
+    ----------
+    dists : list[FiniteDist]
+        分布列表。
+    labels : list[str]
+        每个分布对应的标签（如 "抽1个", "抽2个"）。
+    quantiles : list[tuple[float, str]] | None
+        分位数配置列表，每项为 (概率, 趣味文本)。
+        默认为 [(0.25, "较欧"), (0.50, "凡人"), ...]。
+    expected_precision : int
+        期望值保留的小数位数。
+
+    Returns
+    -------
+    pd.DataFrame
+        生成的表格 DataFrame（三层列索引）。
+    """
+    if quantiles is None:
+        quantiles = _DEFAULT_QUANTILES
+
+    data: list[dict] = []
+    for dist, label in zip(dists, labels, strict=True):
+        row: dict = {
+            "标签": label,
+            "期望抽数": round(dist.expect(), expected_precision),
+        }
+        for q, _ in quantiles:
+            row[_pct_str(q)] = int(dist.ppf(q))
+        data.append(row)
+
+    df = pd.DataFrame(data).set_index("标签")
+
+    # 三层列索引：第一层为类别，第二层为百分比，第三层为趣味文本
+    df.columns = pd.MultiIndex.from_tuples(
+        [("期望抽数", "", "")]
+        + [("达成指定概率所需抽数", _pct_str(q), label) for q, label in quantiles]
+    )
+
+    return df
